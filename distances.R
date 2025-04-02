@@ -1,15 +1,15 @@
 library(sf)
 
-#points (coordinates)
+#load file with points (coordinates)
 datos <- read.table("points.csv", header=TRUE, sep=",")
 
-#first shp
+#load the first shp
 linea_costera <- st_read("lines.shp")
 
 #second shp
 lagos <- st_read("HydroLAKES_polys_v10.shp") 
 
-#check geometry of lagos and upload the new shp
+#check geometry of lagos and upload the new shp usign sf
 lagos_valid <- st_make_valid(lagos)
 st_write(lagos_valid, "lagos_valid.shp")
 lagos <- st_read("lagos_valid.shp")
@@ -20,18 +20,19 @@ st_write(lagos_grandes, "lagos_grandes.shp")
 lagos <- st_read("lagos_grandes.shp") 
 
 
-#Function to calculate the distance between a set of points and both shp
-calcular_distancia_agua <- function(puntos, shapefile_costa, shapefile_lagos) {
+#create a function to calculate the distance between a set of points and both shp
+water_distance <- function(puntos, shapefile_costa, shapefile_lagos) {
   ids_montana <- unique(puntos$ID_mountain)
   
   for (id in ids_montana) {
     # different set of points
+    # the column ID_mountain contains the identification of each mountain, so the function iterates over each distinct mountain
     puntos_id_mountain <- puntos[puntos$ID_mountain == id,]
     
     # Convert points to sf object
     puntos_id <- st_as_sf(puntos_id_mountain, coords = c("x", "y"), crs = 4326)
     
-    #buffer
+    # buffer, so the code doesn't calculate the distance between points and all the shapefiles
     bbox <- st_bbox(puntos_id)
     poligono <- st_as_sfc(bbox)
     buffer <- st_buffer(poligono, dist = 10000)
@@ -68,4 +69,4 @@ calcular_distancia_agua <- function(puntos, shapefile_costa, shapefile_lagos) {
     write.csv(puntos_id_mountain, paste0("/sm_", id, ".csv"), row.names = FALSE)
   }
 }
-calcular_distancia_agua(datos, linea_costera, lagos)
+water_distance (datos, linea_costera, lagos)
